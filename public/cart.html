@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cart</title>
+    <style>
+        /* أضف CSS هنا */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>My Cart</h1>
+    </header>
+    <main>
+        <section class="cart">
+            <h2>Your Cart</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Book Title</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="cartItems">
+                    <!-- سيتم إدراج عناصر السلة هنا باستخدام جافا سكريبت -->
+                </tbody>
+            </table>
+            <p>Total Price: $<span id="totalPrice">0.00</span></p>
+            <button id="checkoutBtn">Checkout</button>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // جلب عناصر السلة
+            const cartId = 1; // مثال: تحديد cart_id ثابت. يجب تحديثه حسب الحاجة
+
+            fetch(`http://localhost:3000/cart-items/${cartId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const cartItems = document.getElementById('cartItems');
+                    const totalPrice = document.getElementById('totalPrice');
+                    let total = 0;
+
+                    cartItems.innerHTML = ''; // تأكد من تفريغ القائمة قبل إضافتها
+
+                    data.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${item.title}</td>
+                            <td>${item.quantity}</td>
+                            <td>$${item.price}</td>
+                            <td><button onclick="removeFromCart(${item.item_id})">Remove</button></td>
+                        `;
+                        cartItems.appendChild(row);
+                        total += item.price * item.quantity;
+                    });
+
+                    totalPrice.textContent = total.toFixed(2);
+                })
+                .catch(error => {
+                    console.error('Error fetching cart items:', error);
+                    const cartItems = document.getElementById('cartItems');
+                    cartItems.innerHTML = '<tr><td colspan="4">Failed to load cart items.</td></tr>';
+                });
+        });
+
+        // إزالة عنصر من السلة
+        function removeFromCart(itemId) {
+            fetch(`http://localhost:3000/cart-items/${itemId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert('Item removed from cart!');
+                // إعادة تحميل العناصر من السلة بعد إزالة العنصر
+                location.reload();
+            })
+            .catch(error => console.error('Error removing from cart:', error));
+        }
+    </script>
+</body>
+</html>
